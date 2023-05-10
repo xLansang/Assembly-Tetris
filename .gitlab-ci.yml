@@ -141,7 +141,7 @@ pdf:
     - echo "---" >> pdf.md
 
     - echo "" >> pdf.md
-    - echo "# Checkpoint 2" >> pdf.md
+    - echo "# Assignment 2" >> pdf.md
     - echo "## Student Details" >> pdf.md
     - > 
       echo "- **uid**: $STUDENT_UID" >> pdf.md
