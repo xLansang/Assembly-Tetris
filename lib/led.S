@@ -19,7 +19,7 @@
 init_leds:
   push {r4, lr}
   @ set the columns and rows default to off
-  mov r0, 0b11111
+  mov r0, 0b00000
   bl write_column_pins
   mov r0, 0b00000
   bl write_row_pins
