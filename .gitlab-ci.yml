@@ -201,7 +201,7 @@ pdf:
     - | 
       md-to-pdf --launch-options '{ "args": ["--no-sandbox"] }' \
                 --highlight-style 'vs2015' \
-                --document-title 'Checkpoint 2' \
+                --document-title 'Assignment 2' \
                 --css 'body { font-family: helvetica }'  \
                 pdf.md
     - mv pdf.pdf "$PDF_NAME"
