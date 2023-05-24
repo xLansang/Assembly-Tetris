@@ -59,18 +59,78 @@ main:
   ldr r0, =NVIC_ISER0
   ldr r1, =(1 << 6) @ set the 6th bit since NVIC_GPIOTE_ID = 6
   str r1, [r0]
+
+  @ ldr r4, =T
+  @ mov r0, r4
+  @ mov r1, 10
+  @ mov r2, 5
+  @ mov r3, 0b00001
+  @ bl show_image
+
+  @ ldr r4, =E
+  @ mov r0, r4
+  @ mov r1, 10
+  @ mov r2, 5
+  @ mov r3, 0b00001
+  @ bl show_image
+
+  @ ldr r4, =T
+  @ mov r0, r4
+  @ mov r1, 10
+  @ mov r2, 5
+  @ mov r3, 0b00001
+  @ bl show_image
+
+  @ ldr r4, =R
+  @ mov r0, r4
+  @ mov r1, 10
+  @ mov r2, 5
+  @ mov r3, 0b00001
+  @ bl show_image
+
+  @ ldr r4, =I
+  @ mov r0, r4
+  @ mov r1, 10
+  @ mov r2, 5
+  @ mov r3, 0b00001
+  @ bl show_image
+
+  @ ldr r4, =S
+  @ mov r0, r4
+  @ mov r1, 10
+  @ mov r2, 5
+  @ mov r3, 0b00001
+  @ bl show_image
  
-  @ ldr r0, =image_end
-  @ sub r0, 4
-  @ mov r1, 5
-  @ mov r2, 2
-  @ bl display_image
 
   tetris_display:
-  ldr r4, =tetris
-  mov r5, 4
+  ldr r0, =first_piece
+  bl drop_piece
 
-  tetris_loop:
+  ldr r0, =second_piece
+  bl drop_piece
+
+  ldr r0, =third_piece
+  bl drop_piece
+
+  ldr r0, =fourth_piece
+  bl drop_piece
+
+  ldr r0, =fifth_piece
+  bl drop_piece
+
+
+  end_game:
+  mov r5, 3
+  end_gameloop:
+  ldr r4, =tetris
+  mov r0, r4
+  mov r1, 10
+  mov r2, 5
+  mov r3, 0b00001
+  bl show_image
+
+  ldr r4, =empty
   mov r0, r4
   mov r1, 10
   mov r2, 5
@@ -78,25 +138,9 @@ main:
   bl show_image
 
   subs r5, 1
-  beq here
+  blt inf_loop
 
-  ldr r1, [r4]
-  ldr r2, [r4, 4]
-  ldr r3, [r4, 8]
-
-  lsl r1, 1
-  lsl r2, 1
-  lsl r3, 1
-  
-  str r1, [r4]
-  str r2, [r4, 4]
-  str r3, [r4, 8]
-
-  b tetris_loop
-
-  here:
-  ldr r0, =tetris_pieces
-  bl drop_piece
+  b end_gameloop
 
   inf_loop:
   nop
@@ -127,6 +171,23 @@ display_image:
   mov r4, r0
   mov r5, 1
   mov r11, r2
+
+  @ forward:
+  @ mov r5, 4
+  @ mov r3, 0b10000
+  
+  @ forward_loop:
+  @ mov r0, r4
+  @ mov r1, r11
+  @ mov r2, r5
+  @ bl show_image
+
+  @ subs r5, 1
+  @ beq leave
+
+  @ ror r3, 1
+  @ add r4, 4
+  @ b forward_loop
 
   display_loop:
   mov r0, r4
@@ -259,10 +320,10 @@ show_image:
 @ if a piece has less than three, then enter the columns as 0
 @ Function checks if a piece has the the bottom or another piece
 @ Input:
-@ R0, left column
-@ R1, middle column
-@ R2, right column
-@ R3, position
+@ R0, left column address of piece
+@ R1, middle column size horizontally
+@ R2, right column position
+@ R3, position address
 @ Output: sets the data at check collisons to 1, if there is a collision
 @ 0 if there is no collision
 
@@ -271,20 +332,41 @@ check_collision:
   str r4, [sp, -4]!
   str r5, [sp, -4]!
   str r6, [sp, -4]!
+  str r7, [sp, -4]!
+
+  mov r7, r3
+
+  ldr r6, [r7, 12] @size
+  ldr r3, [r7, 20] @position
 
   ldr r4, =prev_tetris
   lsl r3, 2
   add r4, r3
+
+  @ collision_loop:
+  @ ldr r3, [r4], 4
+  @ ldr r5, [r7], 4
+  @ and r3, r5
+  @ cmp r3, 0
+  @ bgt true
   
+  @ subs r6, 1
+  @ beq false
+  @ b collision_loop
+
   ldr r3, [r4]
   and r0, r3
   cmp r0, 0
   bgt true
+  cmp r6, 1
+  beq false
 
   ldr r3, [r4, 4]
   and r1, r3
   cmp r1, 0
   bgt true
+  cmp r6, 2
+  beq false
   
   ldr r3, [r4, 8]
   and r2, r3
@@ -304,6 +386,7 @@ check_collision:
   b exit_check
 
   exit_check:
+  ldr r7, [sp], 4
   ldr r6, [sp], 4
   ldr r5, [sp], 4
   ldr r4, [sp], 4
@@ -382,7 +465,8 @@ insert_piece:
   ldr r0, [r5]
   ldr r1, [r5, 4]
   ldr r2, [r5, 8]
-  ldr r3, [r5, 20]
+  @ ldr r3, [r5, 20]
+  mov r3, r5
 
   bl check_collision
   ldr r0, =collision_address
@@ -456,13 +540,14 @@ drop_piece:
   mov r0, r1
   mov r1, r2
   mov r2, r3
-  mov r3, r6
+  @ mov r3, r6
+  ldr r3, =current_piece
 
   bl check_collision
   ldr r0, =collision_address
   ldr r1, [r0]
   cmp r1, 1
-  beq next_piece @change to end_game afterwards
+  beq end_game @change to end_game afterwards
 
   ldr r0, =current_piece
   ldr r1, [r0, 20]
@@ -498,17 +583,21 @@ drop_piece:
   str r2, [r0, 4]
   str r3, [r0, 8]
 
-  @ ldr r0, =current_piece   @insert the next piece
-  @ ldr r1, [r0, 20]
-  @ ldr r2, =tetris
-  @ bl insert_piece
+  ldr r7, [r7, 16]
+  mov r0, 5
+  sub r7, r0, r7
 
-  @ ldr r4, =tetris
-  @ mov r0, r4
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
+  ldr r0, =possible_move
+  mov r1, 1
+  str r1, [r0]
+
+  ldr r0, =0x444444
+  @ mov r0, 0x1000000
+  bl delay
+
+  ldr r0, =possible_move
+  mov r1, 0
+  str r1, [r0]
 
   @ shuffle piece down
   go_down:
@@ -520,6 +609,7 @@ drop_piece:
   lsl r0, 1
   lsl r1, 1
   lsl r2, 1
+  mov r3, r4
 
   mov r4, r0
   mov r5, r1
@@ -565,12 +655,20 @@ drop_piece:
   str r2, [r0, 4]
   str r3, [r0, 8]
 
-  @ ldr r0, =prev_tetris
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
+  ldr r0, =possible_move
+  mov r1, 1
+  str r1, [r0]
 
+  ldr r0, =0x444444
+  @ mov r0, 0x1000000
+  bl delay
+
+  ldr r0, =possible_move
+  mov r1, 0
+  str r1, [r0]
+
+  subs r7, 1
+  beq set_piece
   b go_down
 
   set_piece:
@@ -597,7 +695,7 @@ drop_piece:
   ldr r4, =tetris
   mov r0, r4
   mov r1, 10
-  mov r2, 11
+  mov r2, 5
   mov r3, 0b00001
   bl show_image
 
@@ -616,19 +714,48 @@ drop_piece:
 .type GPIOTE_IRQHandler, %function
 GPIOTE_IRQHandler:
   @ setup a breakpoint here to check when the interrupt occurs.
-  @ interrupt code goes here'
+  @ interrupt code goes here
   str lr, [sp, -4]!
   str r0, [sp, -4]!
   str r1, [sp, -4]!
   str r2, [sp, -4]!
   str r3, [sp, -4]!
+  str r4, [sp, -4]!
 
-  ldr r0, =image_end
-  sub r0, 4
-  mov r1, 5
-  bl display_image
+  ldr r0, =possible_move
+  ldr r1, [r0]
+  cmp r1, 1
+  bne clear_event
+
+  ldr r0, =current_piece
+  ldr r1, [r0, 20]
+  ldr r2, [r0, 12]
+  mov r3, 5
+  sub r3, r2
+  cmp r1, r3
+  beq clear_event
+
+  add r1, 1
+  str r1, [r0, 20]
   
-  @ clear event
+  ldr r4, =current_piece
+  ldr r0, [r4]
+  ldr r1, [r4, 4]
+  ldr r2, [r4, 8]
+  mov r3, r4
+
+  bl check_collision
+  ldr r0, =collision_address
+  ldr r1, [r0]
+  cmp r1, 1
+  bne clear_event
+
+  ldr r1, [r4, 20]
+  sub r1, 1
+  str r1, [r4, 20]
+
+  
+  clear_event:
   ldr r0, =GPIOTE_EVENTS_IN0
   ldr r1, =0
   str r1, [r0]
@@ -637,6 +764,7 @@ GPIOTE_IRQHandler:
   ldr r1, =0
   str r1, [r0]
 
+  ldr r4, [sp], 4
   ldr r3, [sp], 4
   ldr r2, [sp], 4
   ldr r1, [sp], 4
@@ -647,26 +775,58 @@ GPIOTE_IRQHandler:
 
 
 .data
-image:
-  .word 0b10001 @ Column 1
-  .word 0b10001 @ Column 2
-  .word 0b10101 @ Column 3
-  .word 0b10001 @ Column 4
-  .word 0b10001 @ Column 5
-image_end:
+T:
+ .word 0b00000
+ .word 0b00001
+ .word 0b11111 
+ .word 0b00001 
+ .word 0b00000
+E:
+ .word 0b00000
+ .word 0b11111
+ .word 0b10101
+ .word 0b10101 
+ .word 0b00000
+R:
+ .word 0b00000
+ .word 0b11111
+ .word 0b00101
+ .word 0b11010
+ .word 0b00000
+I:
+ .word 0b00000
+ .word 0b10001
+ .word 0b11111 
+ .word 0b10001 
+ .word 0b00000
+S:
+ .word 0b00000
+ .word 0b10111
+ .word 0b10101 
+ .word 0b11101 
+ .word 0b00000
+
 tetris:
-  .word 0b00010 @ Column 1
-  .word 0b00011 @ Column 2
-  .word 0b00010 @ Column 3
+  .word 0b00000 @ Column 1
+  .word 0b00000 @ Column 2
+  .word 0b00000 @ Column 3
   .word 0b00000 @ Column 4
   .word 0b00000 @ Column 5
 
 prev_tetris:
-  .word 0b10000 @ Column 1
-  .word 0b11000 @ Column 2
-  .word 0b10000 @ Column 3
+  .word 0b00000 @ Column 1
+  .word 0b00000 @ Column 2
+  .word 0b00000 @ Column 3
   .word 0b00000 @ Column 4
   .word 0b00000 @ Column 5
+
+empty:
+  .word 0b00000
+  .word 0b00000 
+  .word 0b00000
+  .word 0b00000
+  .word 0b00000 
+
 
 current_piece:
   .word 0b00000 @ Column 1
@@ -676,7 +836,15 @@ current_piece:
   .word 0b00000
   .word 0b00000
 
-tetris_pieces:
+first_piece:
+  .word 0b00010
+  .word 0b00011
+  .word 0b00010
+  .word 3 @ size horizontally
+  .word 2 @ size vertically
+  .word 0 @ position (changes depending on buttons)
+
+second_piece:
   .word 0b00001
   .word 0b00011
   .word 0b00000
@@ -684,9 +852,36 @@ tetris_pieces:
   .word 2 @ size vertically
   .word 2 @ position (changes depending on buttons)
 
+third_piece:
+  .word 0b00011
+  .word 0b00001
+  .word 0b00001
+  .word 3 @ size horizontally
+  .word 2 @ size vertically
+  .word 0 @ position (changes depending on buttons)
+
+fourth_piece:
+  .word 0b00011
+  .word 0b00000
+  .word 0b00000
+  .word 1 @ size horizontally
+  .word 2 @ size vertically
+  .word 4 @ position (changes depending on buttons)
+
+fifth_piece:
+  .word 0b00001
+  .word 0b00001
+  .word 0b00000
+  .word 2 @ size horizontally
+  .word 1 @ size vertically
+  .word 3 @ position (changes depending on buttons)
+
 collision_address: 
 .word 0 @if this is 0, there is no collision, if this is 1, there is one
 
 game_over:
 .word 0 @If this is 0, the game is still on!, if this is 1, the game is over
+
+possible_move: 
+.word 0 @a button will only work if this value is 1
 
