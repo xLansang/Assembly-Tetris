@@ -25,6 +25,17 @@
 main:
   bl init_leds
 
+  ldr r0, =ADR_SYST_CSR
+  ldr r1, [r0]
+  mov r2, 0b111
+  orr r1, r2
+  str r1, [r0]
+
+  ldr r3, =ADR_SYST_RVR
+  ldr r1, =0b111010000100100000000000
+  str r1, [r3]
+
+
   ldr r0, =GPIOTE_CONFIG0
   ldr r1, =(1 | 14 << 8 | 0 << 13 | 1 << 16) @ |
   str r1, [r0]
@@ -60,48 +71,48 @@ main:
   ldr r1, =(1 << 6) @ set the 6th bit since NVIC_GPIOTE_ID = 6
   str r1, [r0]
 
-  @ ldr r4, =T
-  @ mov r0, r4
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
+  start:
+  ldr r4, =T
+  mov r0, r4
+  mov r1, 10
+  mov r2, 5
+  mov r3, 0b00001
+  bl show_image
 
-  @ ldr r4, =E
-  @ mov r0, r4
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
+  ldr r4, =E
+  mov r0, r4
+  mov r1, 10
+  mov r2, 5
+  mov r3, 0b00001
+  bl show_image
 
-  @ ldr r4, =T
-  @ mov r0, r4
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
+  ldr r4, =T
+  mov r0, r4
+  mov r1, 10
+  mov r2, 5
+  mov r3, 0b00001
+  bl show_image
 
-  @ ldr r4, =R
-  @ mov r0, r4
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
+  ldr r4, =R
+  mov r0, r4
+  mov r1, 10
+  mov r2, 5
+  mov r3, 0b00001
+  bl show_image
 
-  @ ldr r4, =I
-  @ mov r0, r4
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
+  ldr r4, =I
+  mov r0, r4
+  mov r1, 10
+  mov r2, 5
+  mov r3, 0b00001
+  bl show_image
 
-  @ ldr r4, =S
-  @ mov r0, r4
-  @ mov r1, 10
-  @ mov r2, 5
-  @ mov r3, 0b00001
-  @ bl show_image
- 
+  ldr r4, =S
+  mov r0, r4
+  mov r1, 10
+  mov r2, 5
+  mov r3, 0b00001
+  bl show_image
 
   tetris_display:
   ldr r0, =first_piece
@@ -119,13 +130,24 @@ main:
   ldr r0, =fifth_piece
   bl drop_piece
 
+  ldr r0, =sixth_piece
+  bl drop_piece
+
+  @ ldr r0, =0x100
+  @ @ mov r0, 0x1000000
+  @ bl delay
 
   end_game:
+  ldr r0, =systimer
+  mov r1, 0
+  str r1, [r0]
+  
   mov r5, 3
   end_gameloop:
+
   ldr r4, =tetris
   mov r0, r4
-  mov r1, 10
+  mov r1, 5
   mov r2, 5
   mov r3, 0b00001
   bl show_image
@@ -138,182 +160,44 @@ main:
   bl show_image
 
   subs r5, 1
-  blt inf_loop
+  blt reset_game
 
   b end_gameloop
 
-  inf_loop:
-  nop
-  b inf_loop
-  b main
+  reset_game:
+  ldr r0, =tetris
+  mov r1, 0
+  str r1, [r0]
+  str r1, [r0, 4]
+  str r1, [r0, 8]
+  str r1, [r0, 12]
+  str r1, [r0, 16]
+
+  ldr r0, =prev_tetris
+  str r1, [r0]
+  str r1, [r0, 4]
+  str r1, [r0, 8]
+  str r1, [r0, 12]
+  str r1, [r0, 16]
+
+  ldr r0, =current_piece
+  str r1, [r0]
+  str r1, [r0, 4]
+  str r1, [r0, 8]
+  str r1, [r0, 12]
+  str r1, [r0, 16]
+  str r1, [r0, 20]
+
+  ldr r0, =collision_address
+  str r1, [r0]
+
+  ldr r0, =game_over
+  str r1, [r0]
+  b start
+  
 .size main, .-main
 
-.type display_image %function
-@ takes two arguments, base address of the image, length of image
-@ R0: base address
-@ R1: length
-@ R2: speed of display
-@ loads the value at the base address
-@ scans the image at the base address
 
-display_image:
-  str lr, [sp, -4]!
-  str r4, [sp, -4]!
-  str r5, [sp, -4]!
-  str r6, [sp, -4]!
-  str r7, [sp, -4]!
-  str r8, [sp, -4]!
-  str r9, [sp, -4]!
-  str r10, [sp, -4]!
-  str r11, [sp, -4]!
-
-  mov r6, 5
-  mov r4, r0
-  mov r5, 1
-  mov r11, r2
-
-  @ forward:
-  @ mov r5, 4
-  @ mov r3, 0b10000
-  
-  @ forward_loop:
-  @ mov r0, r4
-  @ mov r1, r11
-  @ mov r2, r5
-  @ bl show_image
-
-  @ subs r5, 1
-  @ beq leave
-
-  @ ror r3, 1
-  @ add r4, 4
-  @ b forward_loop
-
-  display_loop:
-  mov r0, r4
-  mov r1, r11
-  mov r2, r5
-  mov r3, 0b00001
-  bl show_image
-
-  cmp r5, 5
-  beq forward
-
-  sub r4, 4
-  add r5, 1
-
-  b display_loop
-
-  forward:
-  mov r5, 4
-  mov r3, 0b00010
-  
-  forward_loop:
-  mov r0, r4
-  mov r1, r11
-  mov r2, r5
-  bl show_image
-
-  subs r5, 1
-  beq leave
-
-  lsl r3, 1
-  b forward_loop
-  
-  leave:
-  ldr r11, [sp], 4
-  ldr r10, [sp], 4
-  ldr r9, [sp], 4
-  ldr r8, [sp], 4
-  ldr r7, [sp], 4
-  ldr r6, [sp], 4
-  ldr r5, [sp], 4
-  ldr r4, [sp], 4
-  ldr lr, [sp], 4 
-
-  bx lr
-
-.size display_image, .-display_image
-
-
-.type show_image %function
-@ input:
-@ R0: base address
-@ R1: number of iterations
-@ R2: the number of columns to run through
-@ R3: the starting column
-@ loads the value at the base address
-@ Output:
-@ scans the image at the base address
-
-show_image:
-  str lr, [sp, -4]!
-  str r4, [sp, -4]!
-  str r5, [sp, -4]! @store registers on to stack
-  str r6, [sp, -4]!
-  str r7, [sp, -4]!
-  str r8, [sp, -4]!
-  str r9, [sp, -4]!
-
-  str r3, [sp, -4]!
-
-  mov r9, r2 @number of columns to go through
-  mov r10, r3 @ starting column
-
-  mov r4, r0 @r4 register is used to iterate through the addresses of each column
-  mov r8, r0 @r8 register is used to remember the base address of the image to return to
-
-  mov r7, r1 @remember the number of times to display image
-  mov r6, 0
-  bl init_leds
-  ldr r5, [sp]
-
-  show_loop:
-  ldr r0, [r4], 4
-  bl write_row_pins
-
-  mov r0, r5
-  bl write_column_pins
-
-  mov r0, 0x10000
-  bl delay
-  mov r0, 0x1000
-  bl delay
-
-  mov r0, 0b00000
-  bl write_column_pins
-
-  mov r0, 0x1000
-  bl delay
-  
-  lsl r5, 1
-  add r6, 1
-
-  cmp r6, r9 @check if you've finished the full image
-  bne show_loop 
-
-  mov r6, 0
-  ldr r5, [sp]
-  mov r4, r8
-
-  subs r7, 1 @check if you've shown the image n amount of times
-  blt leave_show
-
-  b show_loop
-  
-  leave_show:
-  ldr r3, [sp], 4
-  ldr r9, [sp], 4
-  ldr r8, [sp], 4
-  ldr r7, [sp], 4
-  ldr r6, [sp], 4
-  ldr r5, [sp], 4
-  ldr r4, [sp], 4
-  ldr lr, [sp], 4 
-
-  bx lr
-
-.size show_image, .-show_image
 
 .type check_collision %function
 @ takes four arguments, the current columns of a piece and the position of that piece
@@ -339,20 +223,9 @@ check_collision:
   ldr r6, [r7, 12] @size
   ldr r3, [r7, 20] @position
 
-  ldr r4, =prev_tetris
+  ldr r4, =tetris
   lsl r3, 2
   add r4, r3
-
-  @ collision_loop:
-  @ ldr r3, [r4], 4
-  @ ldr r5, [r7], 4
-  @ and r3, r5
-  @ cmp r3, 0
-  @ bgt true
-  
-  @ subs r6, 1
-  @ beq false
-  @ b collision_loop
 
   ldr r3, [r4]
   and r0, r3
@@ -395,50 +268,6 @@ check_collision:
   bx lr
 
 .size check_collision, .-check_collision
-
-.type check_columns %function
-@ takes one argument, R0
-@ Input: R0, column we want to check for collision
-@ Output: R1 is 1 if its true, 0 if its false.
-check_columns:
-  str lr, [sp, -4]!
-  str r4, [sp, -4]!
-  str r5, [sp, -4]!
-  str r6, [sp, -4]!
-
-  ldr r4, =prev_tetris
-  mov r5, 4
-  mov r6, 0
-  column_loop:
-  mul r5, r6
-  ldr r3, [r4, r5]
-  and r3, r0
-  cmp r3, 0
-  bgt set_true
-
-  cmp r6, 4
-  beq set_false
-  mov r5, 4
-  add r6, 1
-  b column_loop
-
-  set_true:
-  mov r1, 1
-  b exit_column
-
-  set_false:
-  mov r1, 0
-  b exit_column
-
-  exit_column:
-  ldr r6, [sp], 4
-  ldr r5, [sp], 4
-  ldr r4, [sp], 4
-  ldr lr, [sp], 4 
-
-  bx lr
-
-.size check_columns, .-check_columns
 
 .type insert_piece %function
 @ takes three arguments, 
@@ -521,7 +350,7 @@ drop_piece:
   str r5, [sp, -4]!
   str r6, [sp, -4]!
   str r7, [sp, -4]!
-  
+
   ldr r1, [r0]
   ldr r2, [r0, 4]
   ldr r3, [r0, 8]
@@ -540,14 +369,17 @@ drop_piece:
   mov r0, r1
   mov r1, r2
   mov r2, r3
-  @ mov r3, r6
   ldr r3, =current_piece
 
   bl check_collision
   ldr r0, =collision_address
   ldr r1, [r0]
   cmp r1, 1
-  beq end_game @change to end_game afterwards
+  beq end_game
+
+  ldr r0, =possible_move
+  mov r1, 1
+  str r1, [r0]
 
   ldr r0, =current_piece
   ldr r1, [r0, 20]
@@ -555,11 +387,11 @@ drop_piece:
   bl insert_piece
   
   ldr r0, =prev_tetris
-  mov r1, 10
+  mov r1, 20
   mov r2, 5
   mov r3, 0b00001
   bl show_image
-  
+
   ldr r0, =current_piece
   ldr r1, [r0, 20]
   
@@ -586,19 +418,16 @@ drop_piece:
   ldr r7, [r7, 16]
   mov r0, 5
   sub r7, r0, r7
+  
 
-  ldr r0, =possible_move
-  mov r1, 1
-  str r1, [r0]
+  @ ldr r0, =0x555555
+  @ @ mov r0, 0x1000000
+  @ bl delay
 
-  ldr r0, =0x444444
-  @ mov r0, 0x1000000
-  bl delay
-
-  ldr r0, =possible_move
-  mov r1, 0
-  str r1, [r0]
-
+  @ ldr r0, =possible_move
+  @ mov r1, 0
+  @ str r1, [r0]
+ 
   @ shuffle piece down
   go_down:
   ldr r4, =current_piece
@@ -632,7 +461,7 @@ drop_piece:
   bl insert_piece
   
   ldr r0, =prev_tetris
-  mov r1, 10
+  mov r1, 20
   mov r2, 5
   mov r3, 0b00001
   bl show_image
@@ -659,13 +488,17 @@ drop_piece:
   mov r1, 1
   str r1, [r0]
 
-  ldr r0, =0x444444
-  @ mov r0, 0x1000000
-  bl delay
+  @ ldr r0, =0x555555
+  @ @ mov r0, 0x1000000
+  @ bl delay
 
-  ldr r0, =possible_move
-  mov r1, 0
-  str r1, [r0]
+  @ ldr r0, =possible_move
+  @ mov r1, 0
+  @ str r1, [r0]
+
+  @ ldr r0, =possible_move
+  @ mov r1, 0
+  @ str r1, [r0]
 
   subs r7, 1
   beq set_piece
@@ -694,7 +527,7 @@ drop_piece:
   display:
   ldr r4, =tetris
   mov r0, r4
-  mov r1, 10
+  mov r1, 50
   mov r2, 5
   mov r3, 0b00001
   bl show_image
@@ -716,18 +549,55 @@ GPIOTE_IRQHandler:
   @ setup a breakpoint here to check when the interrupt occurs.
   @ interrupt code goes here
   str lr, [sp, -4]!
-  str r0, [sp, -4]!
-  str r1, [sp, -4]!
-  str r2, [sp, -4]!
-  str r3, [sp, -4]!
   str r4, [sp, -4]!
+
+  ldr r0, =systimer
+  ldr r1, [r0]
+  ldr r2, [r0, 4]
+  str r1, [r0, 4]
+  sub r1, 1
+  cmp r1, r2
+  ble clear_event
 
   ldr r0, =possible_move
   ldr r1, [r0]
   cmp r1, 1
   bne clear_event
 
-  ldr r0, =current_piece
+  ldr r0, =GPIOTE_EVENTS_IN0
+  ldr r1, [r0]
+  cmp r1, 1
+  bne button_b
+
+  ldr r0, =current_piece @check if the move is out of bounds
+  ldr r1, [r0, 20]
+  ldr r2, [r0, 12]
+  cmp r1, 0
+  beq clear_event
+
+  sub r1, 1
+  str r1, [r0, 20]
+
+  ldr r4, =current_piece
+  ldr r0, [r4]
+  ldr r1, [r4, 4]
+  ldr r2, [r4, 8]
+  mov r3, r4
+
+  bl check_collision
+  ldr r0, =collision_address
+  ldr r1, [r0]
+  cmp r1, 1
+  bne clear_event
+
+  ldr r1, [r4, 20]
+  add r1, 1
+  str r1, [r4, 20]
+  
+  b clear_event
+
+  button_b:
+  ldr r0, =current_piece @check if the move is out of bounds
   ldr r1, [r0, 20]
   ldr r2, [r0, 12]
   mov r3, 5
@@ -737,7 +607,7 @@ GPIOTE_IRQHandler:
 
   add r1, 1
   str r1, [r0, 20]
-  
+
   ldr r4, =current_piece
   ldr r0, [r4]
   ldr r1, [r4, 4]
@@ -765,16 +635,25 @@ GPIOTE_IRQHandler:
   str r1, [r0]
 
   ldr r4, [sp], 4
-  ldr r3, [sp], 4
-  ldr r2, [sp], 4
-  ldr r1, [sp], 4
-  ldr r0, [sp], 4
   ldr lr, [sp], 4
   bx lr
 .size GPIOTE_IRQHandler, .-GPIOTE_IRQHandler
 
+.global SysTick_Handler
+.type SysTick_Handler, %function
+SysTick_Handler:
+  ldr r0,=systimer
+  ldr r1,[r0]
+  add r1, 1
+  str r1, [r0]
+  bx lr
+.size SysTick_Handler, .-SysTick_Handler
+
 
 .data
+systimer:
+.word 0
+.word 0
 T:
  .word 0b00000
  .word 0b00001
@@ -827,7 +706,6 @@ empty:
   .word 0b00000
   .word 0b00000 
 
-
 current_piece:
   .word 0b00000 @ Column 1
   .word 0b00000 @ Column 2
@@ -842,7 +720,7 @@ first_piece:
   .word 0b00010
   .word 3 @ size horizontally
   .word 2 @ size vertically
-  .word 0 @ position (changes depending on buttons)
+  .word 1 @ position (changes depending on buttons)
 
 second_piece:
   .word 0b00001
@@ -850,7 +728,7 @@ second_piece:
   .word 0b00000
   .word 2 @ size horizontally
   .word 2 @ size vertically
-  .word 2 @ position (changes depending on buttons)
+  .word 0 @ position (changes depending on buttons)
 
 third_piece:
   .word 0b00011
@@ -861,14 +739,22 @@ third_piece:
   .word 0 @ position (changes depending on buttons)
 
 fourth_piece:
-  .word 0b00011
+  .word 0b00001
   .word 0b00000
   .word 0b00000
   .word 1 @ size horizontally
-  .word 2 @ size vertically
-  .word 4 @ position (changes depending on buttons)
+  .word 1 @ size vertically
+  .word 3 @ position (changes depending on buttons)
 
 fifth_piece:
+  .word 0b00001
+  .word 0b00000
+  .word 0b00000
+  .word 1 @ size horizontally
+  .word 1 @ size vertically
+  .word 3 @ position (changes depending on buttons)
+
+sixth_piece:
   .word 0b00001
   .word 0b00001
   .word 0b00000
