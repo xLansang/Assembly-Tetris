@@ -147,10 +147,6 @@ main:
   ldr r0, =sixth_piece
   bl drop_piece
 
-  @ ldr r0, =0x100
-  @ @ mov r0, 0x1000000
-  @ bl delay
-
   end_game:
   ldr r0, =systimer
   mov r1, 0
@@ -501,18 +497,6 @@ drop_piece:
   ldr r0, =possible_move
   mov r1, 1
   str r1, [r0]
-
-  @ ldr r0, =0x555555
-  @ @ mov r0, 0x1000000
-  @ bl delay
-
-  @ ldr r0, =possible_move
-  @ mov r1, 0
-  @ str r1, [r0]
-
-  @ ldr r0, =possible_move
-  @ mov r1, 0
-  @ str r1, [r0]
 
   subs r7, 1
   beq set_piece

@@ -20,24 +20,16 @@ show_image:
   str r6, [sp, -4]!
   str r7, [sp, -4]!
   str r8, [sp, -4]!
-  str r9, [sp, -4]!
-  str r10, [sp, -4]!
-
-  @ ldr r4, =possible_move
-  @ mov r5, 0
-  @ str r5, [r4]
-
   str r3, [sp, -4]!
 
-  mov r9, r2 @number of columns to go through
-  mov r10, r3 @ starting column
-
+ @this function branches off repeatedly so values must be save
+  mov r9, r2
+  mov r10, r3 
   mov r4, r0 @r4 register is used to iterate through the addresses of each column
   mov r8, r0 @r8 register is used to remember the base address of the image to return to
-
-  mov r7, r1 @remember the number of times to display image
+  mov r7, r1 
   mov r6, 0
-  bl init_leds
+
   ldr r5, [sp]
 
   show_loop:
@@ -74,16 +66,10 @@ show_image:
   b show_loop
   
   leave_show:
-  @ ldr r4, =possible_move
-  @ mov r5, 1
-  @ str r5, [r4]
-
   ldr r3, [sp], 4
-  ldr r10, [sp], 4
-  ldr r9, [sp], 4
   ldr r8, [sp], 4
   ldr r7, [sp], 4
-  ldr r6, [sp], 4
+  ldr r6, [sp], 4 @restore save registers
   ldr r5, [sp], 4
   ldr r4, [sp], 4
   ldr lr, [sp], 4 
@@ -112,27 +98,29 @@ display_image:
   str r10, [sp, -4]!
   str r11, [sp, -4]!
 
+  @function branches off, arguments are saved 
   mov r6, 5
   mov r4, r0
   mov r5, 1 @move values to registers that will not change after a function is called
   mov r11, r2
 
-  display_loop:
+  display_loop:  @display loop is the first half of the moving display
   mov r0, r4
   mov r1, r11
   mov r2, r5
-  mov r3, 0b00001  @Starting at the e
+  mov r3, 0b00001  @Initially displays the end of the image at the left most column
   bl show_image
 
   cmp r5, 5
   beq forward
 
-  sub r4, 4
+  sub r4, 4    
   add r5, 1
 
   b display_loop
 
-  forward:
+  @forward loops continues the second half of the moving display
+  forward: 
   mov r5, 4
   mov r3, 0b00010
   
