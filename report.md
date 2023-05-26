@@ -20,11 +20,11 @@ The game utilises a series of functions and data structures to make the implemen
 
 ![Tetris Diagram!](assets/Tetris_Diagram.png)
 
-When the game starts, the drop piece function is called on the first piece. The function starts by copying the values of this piece to the 'current_piece' data structure of the game. Creating this copy allows changes to be made to the piece's position and only having to reset/overwrite this copy as the game moves along.
+When the game starts, the drop piece function is called on the first piece. This function is in charge of inserting, descending and setting a piece. The function starts by copying the values of this piece to the 'current_piece' data structure of the game. Creating this copy allows changes to be made to the piece's position and only having to reset/overwrite this copy as the game moves along.
 
  Afterwards, it checks if inserting the piece into the game is valid by calling the 'check_collision' function on the piece. A collision returns true if ANDing the values of TETRIS data and the values of the piece data returns a value greater than 0. If a piece insertion is invalid, the game_over boolean is set to true and the game ends. If it is valid, the piece is inserted and starts descending to the bottom.
 
- The descent of a piece is a loop that changes the values of a piece to lower it in the board, checks to see if the descent causes a collision and sets the piece if it's reached the floor. It is heavily depende piece consists of the three main aspects. The column values of the piece, the size of the piece (vertically and horizontally) and the position of the piece. The size of the piece vertically is what dictates how many times a piece is able to descend
+ A single piece's data consists of the three main aspects. The column values of the piece, the size of the piece (vertically and horizontally) and the position of the piece. The vertical size is what dictates how many times a piece is able to descend, the horizontal size dictages how far a piece can shift left to right. 
 
 There are two key functions used to display an image on the board, Display_image and Show_image. Show_image displays a still image on the board for a given time. It starts by turning on the row pins for each value in data. It then turns on the corresponding column for that row, delays for a while, turns the column off, and then delays again before repeating the loop. This scans the image and allows us to display any sort of image we want on the 5x5 board.
 
