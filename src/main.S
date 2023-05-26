@@ -12,6 +12,8 @@
 @ NVIC Constants
 .set NVIC_ISER0, 0xE000E100
 
+@Function.S contains the functions regarding the display of the board
+
 .type main, %function
 main:
 @Turning on buttons, systick timer and LEDs
@@ -471,6 +473,17 @@ drop_piece:
   ldr r0, =possible_move
   mov r1, 1
   str r1, [r0]
+
+ @   There is a section in the flaws section of the report that talks about having
+ @   the program flash to indicate when a player can move. Uncommenting the code
+ @   below and running it will provide an example of what it looks like
+
+  @ ldr r0, =0xEEEEEE
+  @ bl delay             
+
+  @ ldr r0, =possible_move
+  @ mov r1, 0
+  @ str r1, [r0]
 
   subs r7, 1
   beq set_piece @if it cannot move any further set the piece
