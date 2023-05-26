@@ -94,10 +94,10 @@ show_image:
 
 
 .type display_image %function
-@ takes two arguments, base address of the image, length of image
-@ R0: base address
-@ R1: length
-@ R2: speed of display
+@ takes two arguments, end address of the image, length of image
+@ R0: end address of the image
+@ R1: length of the image
+@ R2: speed of display. Higher values >> slower and vice versa.
 @ loads the value at the base address
 @ scans the image at the base address
 
@@ -114,14 +114,14 @@ display_image:
 
   mov r6, 5
   mov r4, r0
-  mov r5, 1
+  mov r5, 1 @move values to registers that will not change after a function is called
   mov r11, r2
 
   display_loop:
   mov r0, r4
   mov r1, r11
   mov r2, r5
-  mov r3, 0b00001
+  mov r3, 0b00001  @Starting at the e
   bl show_image
 
   cmp r5, 5
@@ -147,6 +147,7 @@ display_image:
 
   lsl r3, 1
   b forward_loop
+
   
   leave:
   ldr r11, [sp], 4
@@ -162,3 +163,4 @@ display_image:
   bx lr
 
 .size display_image, .-display_image
+

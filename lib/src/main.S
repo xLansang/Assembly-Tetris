@@ -72,8 +72,22 @@ main:
   str r1, [r0]
 
   start:
-  ldr r4, =T
-  mov r0, r4
+  ldr r0, =lights_end
+  mov r1, 5
+  mov r2, 1
+  bl display_image
+
+  ldr r0, =lights_end
+  mov r1, 5
+  mov r2, 1
+  bl display_image
+
+  ldr r0, =lights_end
+  mov r1, 5
+  mov r2, 1
+  bl display_image
+
+  ldr r0, =T
   mov r1, 10
   mov r2, 5
   mov r3, 0b00001
@@ -654,6 +668,15 @@ SysTick_Handler:
 systimer:
 .word 0
 .word 0
+
+lights:
+ .word 0b10001
+ .word 0b10001
+ .word 0b10001
+ .word 0b10001 
+ .word 0b10001
+lights_end:
+
 T:
  .word 0b00000
  .word 0b00001
@@ -720,45 +743,45 @@ first_piece:
   .word 0b00010
   .word 3 @ size horizontally
   .word 2 @ size vertically
-  .word 1 @ position (changes depending on buttons)
+  .word 0 @ position (changes depending on buttons)
 
 second_piece:
+  .word 0b00011
+  .word 0b00001
+  .word 0b00000
+  .word 2 @ size horizontally
+  .word 2 @ size vertically
+  .word 1 @ position (changes depending on buttons)
+
+third_piece:
   .word 0b00001
   .word 0b00011
   .word 0b00000
   .word 2 @ size horizontally
   .word 2 @ size vertically
-  .word 0 @ position (changes depending on buttons)
-
-third_piece:
-  .word 0b00011
-  .word 0b00001
-  .word 0b00001
-  .word 3 @ size horizontally
-  .word 2 @ size vertically
-  .word 0 @ position (changes depending on buttons)
+  .word 2 @ position (changes depending on buttons)
 
 fourth_piece:
   .word 0b00001
+  .word 0b00001
   .word 0b00000
-  .word 0b00000
-  .word 1 @ size horizontally
+  .word 2 @ size horizontally
   .word 1 @ size vertically
-  .word 3 @ position (changes depending on buttons)
+  .word 1 @ position (changes depending on buttons)
 
 fifth_piece:
   .word 0b00001
+  .word 0b00001
   .word 0b00000
-  .word 0b00000
-  .word 1 @ size horizontally
+  .word 2 @ size horizontally
   .word 1 @ size vertically
   .word 3 @ position (changes depending on buttons)
 
 sixth_piece:
   .word 0b00001
-  .word 0b00001
   .word 0b00000
-  .word 2 @ size horizontally
+  .word 0b00000
+  .word 1 @ size horizontally
   .word 1 @ size vertically
   .word 3 @ position (changes depending on buttons)
 
