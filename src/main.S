@@ -9,20 +9,12 @@
 .set SHPR3, 0xE000ED20
 .set NVIC_IPR1, 0xE000E404
 
-@Have a game state function that loops on a single piece
-@At the play of each piece, insert the columns of the piece into r0, r1, r2.
-@Change the data structure of the current piece to the piece at r0, r1, r2
-@Have a data structure called position that contains the number 0
-@if the button B button is pressed, add 1 to this data structure and shift the position of piece in the current state to the right
-@if the button A is pressed, substract 1 to this data structure and shift the position of a piece in the current state to the right
-@if the position is 0, A does nothing
-@if the the position is 5 - size of the piece, B does nothing
-
 @ NVIC Constants
 .set NVIC_ISER0, 0xE000E100
 
 .type main, %function
 main:
+@Turning on buttons, systick timer and LEDs
   bl init_leds
 
   ldr r0, =ADR_SYST_CSR
@@ -35,23 +27,14 @@ main:
   ldr r1, =0b111010000100100000000000
   str r1, [r3]
 
-
   ldr r0, =GPIOTE_CONFIG0
   ldr r1, =(1 | 14 << 8 | 0 << 13 | 1 << 16) @ |
   str r1, [r0]
 
-  @ 1: Configure GPIOTE_CONFIG[0]
-  @   Need to setup: mode, pin, port, polarity in the configuration 
-  @   register for GPIOTE[0]
-  @ Section 6.9.4.8 in nRF52833 reference manual
-  @   mode = 1 (event), pin = 14 and port = 0 (P0.14 = Button A), 
-  @   polarity = 1 (LoToHi)
   ldr r0, =GPIOTE_CONFIG1
   ldr r1, =(1 | 23 << 8 | 0 << 13 | 1 << 16) @ |
   str r1, [r0]
 
-@ 2: Enable Interrupt for GPIOTE[0] (id = 6)
-  @ S6.9.4.6 in nRF52833 reference manual
   ldr r0, =GPIOTE_INTENSET
   ldr r1, =0b11
   str r1, [r0]
@@ -65,12 +48,11 @@ main:
   ldr r1, =(0 << 23 | 0 << 22 |  1 << 21 )
   str r1, [r0]
 
-@ 3: enable GPIOTE (interrupt #6 = NVIC_GPIOTE_ID) in NVIC_ISER0
-  @ NVIC_ISER0: B3.4.4 in ARMv7-M Reference Manual
   ldr r0, =NVIC_ISER0
-  ldr r1, =(1 << 6) @ set the 6th bit since NVIC_GPIOTE_ID = 6
+  ldr r1, =(1 << 6) 
   str r1, [r0]
 
+@ Beginning of program
   start:
   ldr r0, =lights_end
   mov r1, 5
@@ -128,6 +110,7 @@ main:
   mov r3, 0b00001
   bl show_image
 
+@Beginning of game
   tetris_display:
   ldr r0, =first_piece
   bl drop_piece
@@ -148,13 +131,12 @@ main:
   bl drop_piece
 
   end_game:
-  ldr r0, =systimer
+  ldr r0, =systimer @resets the button bounce checker
   mov r1, 0
   str r1, [r0]
   
   mov r5, 3
   end_gameloop:
-
   ldr r4, =tetris
   mov r0, r4
   mov r1, 5
@@ -174,11 +156,12 @@ main:
 
   b end_gameloop
 
+@Clearing boards, current piece and booleans
   reset_game:
   ldr r0, =tetris
   mov r1, 0
   str r1, [r0]
-  str r1, [r0, 4]
+  str r1, [r0, 4] 
   str r1, [r0, 8]
   str r1, [r0, 12]
   str r1, [r0, 16]
@@ -212,7 +195,7 @@ main:
 .type check_collision %function
 @ takes four arguments, the current columns of a piece and the position of that piece
 @ if a piece has less than three, then enter the columns as 0
-@ Function checks if a piece has the the bottom or another piece
+@ Function checks if a piece has hit another piece
 @ Input:
 @ R0, left column address of piece
 @ R1, middle column size horizontally
@@ -229,15 +212,15 @@ check_collision:
   str r7, [sp, -4]!
 
   mov r7, r3
-
   ldr r6, [r7, 12] @size
   ldr r3, [r7, 20] @position
 
-  ldr r4, =tetris
+@gets the corresponding columns of the game to match the position of the piece
+  ldr r4, =tetris 
   lsl r3, 2
   add r4, r3
 
-  ldr r3, [r4]
+  ldr r3, [r4] @checks if there is a collision by AND columns of piece and columns of Board
   and r0, r3
   cmp r0, 0
   bgt true
@@ -285,10 +268,10 @@ check_collision:
 @ R1: the position you would like to insert it in
 @ R2: address of a game
 @ inserts a piece into the game. 
-@ If there is a collision. i.e it overlaps an existing piece on the game. it changes the value of game over to 1
+@ If there is a collision. it changes the value of game over to 1
 @ Input: R0, address of piece in data
 @
-@ Output: new tetris image state, checks if game is over
+@ Output: new tetris state, checks if game is over
 insert_piece:
   str lr, [sp, -4]!
   str r4, [sp, -4]!
@@ -302,12 +285,11 @@ insert_piece:
   mov r4, r2
 
   ldr r0, [r5]
-  ldr r1, [r5, 4]
+  ldr r1, [r5, 4] 
   ldr r2, [r5, 8]
-  @ ldr r3, [r5, 20]
   mov r3, r5
 
-  bl check_collision
+  bl check_collision @Checks if inserting a piece will result in a collision
   ldr r0, =collision_address
   ldr r1, [r0]
   cmp r1, 1
@@ -317,9 +299,9 @@ insert_piece:
   mov r1, 1
   str r1, [r0]
 
-  continue_insert:
+  continue_insert: 
   lsl r8, 2
-  add r4, r8
+  add r4, r8 @This section inserts the piece at the correct location in the board
   mov r3, r5
   ldr r5, [r4]
   ldr r6, [r4, 4]
@@ -396,7 +378,7 @@ drop_piece:
   ldr r2, =prev_tetris
   bl insert_piece
   
-  ldr r0, =prev_tetris
+  ldr r0, =prev_tetris @show the player the current position of the piece
   mov r1, 20
   mov r2, 5
   mov r3, 0b00001
@@ -405,7 +387,7 @@ drop_piece:
   ldr r0, =current_piece
   ldr r1, [r0, 20]
   
-  ldr r0, =prev_tetris
+  ldr r0, =prev_tetris @clear the board to prepare the piece's descent
   lsl r1, 2
   add r0, r1
   ldr r1, [r0]
@@ -429,14 +411,6 @@ drop_piece:
   mov r0, 5
   sub r7, r0, r7
   
-
-  @ ldr r0, =0x555555
-  @ @ mov r0, 0x1000000
-  @ bl delay
-
-  @ ldr r0, =possible_move
-  @ mov r1, 0
-  @ str r1, [r0]
  
   @ shuffle piece down
   go_down:
@@ -454,7 +428,7 @@ drop_piece:
   mov r5, r1
   mov r6, r2
 
-  bl check_collision
+  bl check_collision @Check if descent causes collision
   ldr r0, =collision_address
   ldr r1, [r0]
   cmp r1, 1
@@ -465,7 +439,7 @@ drop_piece:
   str r5, [r0, 4]
   str r6, [r0, 8]
 
-  ldr r0, =current_piece
+  ldr r0, =current_piece @insert piece if no collision
   ldr r1, [r0, 20]
   ldr r2, =prev_tetris
   bl insert_piece
@@ -499,7 +473,7 @@ drop_piece:
   str r1, [r0]
 
   subs r7, 1
-  beq set_piece
+  beq set_piece @if it cannot move any further set the piece
   b go_down
 
   set_piece:
@@ -508,7 +482,7 @@ drop_piece:
   ldr r2, =tetris
   bl insert_piece
 
-  ldr r0, =tetris
+  ldr r0, =tetris @this finalises the position of the piece into the board
   ldr r1, [r0]
   ldr r2, [r0, 4]
   ldr r3, [r0, 8]
@@ -523,7 +497,7 @@ drop_piece:
   str r5, [r0, 16]
 
   display:
-  ldr r4, =tetris
+  ldr r4, =tetris @display the state after the piece has been set
   mov r0, r4
   mov r1, 50
   mov r2, 5
@@ -534,7 +508,7 @@ drop_piece:
   ldr r7, [sp], 4
   ldr r6, [sp], 4
   ldr r5, [sp], 4
-  ldr r4, [sp], 4
+  ldr r4, [sp], 4 
   ldr lr, [sp], 4 
 
   bx lr
@@ -549,7 +523,7 @@ GPIOTE_IRQHandler:
   str lr, [sp, -4]!
   str r4, [sp, -4]!
 
-  ldr r0, =systimer
+  ldr r0, =systimer @Check if a button has bounced
   ldr r1, [r0]
   ldr r2, [r0, 4]
   str r1, [r0, 4]
@@ -557,12 +531,12 @@ GPIOTE_IRQHandler:
   cmp r1, r2
   ble clear_event
 
-  ldr r0, =possible_move
+  ldr r0, =possible_move @Check if button is timed correctly
   ldr r1, [r0]
   cmp r1, 1
   bne clear_event
 
-  ldr r0, =GPIOTE_EVENTS_IN0
+  ldr r0, =GPIOTE_EVENTS_IN0 @Check whether button a or button b was pressed
   ldr r1, [r0]
   cmp r1, 1
   bne button_b
@@ -574,7 +548,7 @@ GPIOTE_IRQHandler:
   beq clear_event
 
   sub r1, 1
-  str r1, [r0, 20]
+  str r1, [r0, 20] @shift left
 
   ldr r4, =current_piece
   ldr r0, [r4]
@@ -582,13 +556,13 @@ GPIOTE_IRQHandler:
   ldr r2, [r4, 8]
   mov r3, r4
 
-  bl check_collision
+  bl check_collision @ensure moving does not cause collision
   ldr r0, =collision_address
   ldr r1, [r0]
   cmp r1, 1
   bne clear_event
 
-  ldr r1, [r4, 20]
+  ldr r1, [r4, 20] @if shift is invalid, revert the position to orignal and do nothing
   add r1, 1
   str r1, [r4, 20]
   
@@ -604,7 +578,7 @@ GPIOTE_IRQHandler:
   beq clear_event
 
   add r1, 1
-  str r1, [r0, 20]
+  str r1, [r0, 20] @shift right
 
   ldr r4, =current_piece
   ldr r0, [r4]
@@ -618,13 +592,13 @@ GPIOTE_IRQHandler:
   cmp r1, 1
   bne clear_event
 
-  ldr r1, [r4, 20]
+  ldr r1, [r4, 20] @if shift is invalid, revert the position to orignal and do nothing
   sub r1, 1
   str r1, [r4, 20]
 
   
   clear_event:
-  ldr r0, =GPIOTE_EVENTS_IN0
+  ldr r0, =GPIOTE_EVENTS_IN0 @Clear buttons
   ldr r1, =0
   str r1, [r0]
 
@@ -640,7 +614,7 @@ GPIOTE_IRQHandler:
 .global SysTick_Handler
 .type SysTick_Handler, %function
 SysTick_Handler:
-  ldr r0,=systimer
+  ldr r0,=systimer @increments to keep in track how long it has been since previous button pressed
   ldr r1,[r0]
   add r1, 1
   str r1, [r0]
@@ -693,34 +667,34 @@ S:
  .word 0b00000
 
 tetris:
-  .word 0b00000 @ Column 1
-  .word 0b00000 @ Column 2
-  .word 0b00000 @ Column 3
-  .word 0b00000 @ Column 4
-  .word 0b00000 @ Column 5
+  .word 0b00000 @Final state of the board
+  .word 0b00000
+  .word 0b00000 
+  .word 0b00000
+  .word 0b00000 
 
 prev_tetris:
-  .word 0b00000 @ Column 1
-  .word 0b00000 @ Column 2
-  .word 0b00000 @ Column 3
-  .word 0b00000 @ Column 4
-  .word 0b00000 @ Column 5
+  .word 0b00000 @State of the board used as the gamestate shifts
+  .word 0b00000 
+  .word 0b00000 
+  .word 0b00000 
+  .word 0b00000 
 
 empty:
-  .word 0b00000
+  .word 0b00000 @used in endgame to flash boarrd
   .word 0b00000 
   .word 0b00000
   .word 0b00000
   .word 0b00000 
 
 current_piece:
-  .word 0b00000 @ Column 1
-  .word 0b00000 @ Column 2
-  .word 0b00000 @ Column 3
+  .word 0b00000 @Each piece is inserted to this data structure
+  .word 0b00000 @to allow changes without have to ruin original
+  .word 0b00000 
   .word 0b00000
   .word 0b00000
   .word 0b00000
-
+@Pieces of the board! Adjust these if the game is too hard.
 first_piece:
   .word 0b00010
   .word 0b00011
@@ -733,48 +707,48 @@ second_piece:
   .word 0b00011
   .word 0b00001
   .word 0b00000
-  .word 2 @ size horizontally
-  .word 2 @ size vertically
-  .word 1 @ position (changes depending on buttons)
+  .word 2 
+  .word 2 
+  .word 1 
 
 third_piece:
   .word 0b00001
   .word 0b00011
   .word 0b00000
-  .word 2 @ size horizontally
-  .word 2 @ size vertically
-  .word 2 @ position (changes depending on buttons)
+  .word 2 
+  .word 2
+  .word 2
 
 fourth_piece:
   .word 0b00001
   .word 0b00001
   .word 0b00000
-  .word 2 @ size horizontally
-  .word 1 @ size vertically
-  .word 1 @ position (changes depending on buttons)
+  .word 2 
+  .word 1 
+  .word 1 
 
 fifth_piece:
   .word 0b00001
   .word 0b00001
   .word 0b00000
-  .word 2 @ size horizontally
-  .word 1 @ size vertically
-  .word 3 @ position (changes depending on buttons)
+  .word 2 
+  .word 1 
+  .word 3 
 
 sixth_piece:
   .word 0b00001
   .word 0b00000
   .word 0b00000
-  .word 1 @ size horizontally
-  .word 1 @ size vertically
-  .word 3 @ position (changes depending on buttons)
+  .word 1 
+  .word 1 
+  .word 3
 
 collision_address: 
-.word 0 @if this is 0, there is no collision, if this is 1, there is one
+.word 0 @ if this is 0, there is no collision, if this is 1, there is one
 
 game_over:
-.word 0 @If this is 0, the game is still on!, if this is 1, the game is over
+.word 0 @ If this is 0, the game is still on!, if this is 1, the game is over
 
 possible_move: 
-.word 0 @a button will only work if this value is 1
+.word 0 @ a button will only work if this value is 1
 
