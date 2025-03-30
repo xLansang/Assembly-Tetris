@@ -1,7 +1,5 @@
-# COMP2300 Assignment 2
+# Tetris Assembly Project
 
-This is the repo for your second assignment of the course.
+This is a project I created for my computer crchitecture course at the ANU. It's a short but fun tetris program built to run a BBC microbit.
 
-Do **not** modify the `.gitlab-ci.yml` file as the results of your CI will be used to generate grades. Tampering with this file will be noticed and may result in academic misconduct.
-
-For more information, read the [assessment page](https://comp.anu.edu.au/courses/comp2300/assessments/assignment-2/).
+Please read the report.md file to understand my rationale for the program's design, as well as all the challenges I faced!
